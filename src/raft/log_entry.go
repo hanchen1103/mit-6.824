@@ -1,9 +1,5 @@
 package raft
 
-import (
-	"fmt"
-)
-
 type logEntry struct {
 	Term    int
 	Command interface{}
@@ -63,11 +59,10 @@ func (rf *Raft) sendUpdateLogMsg() {
 
 		go func(p int) {
 			if role, _, _ := rf.getMetaInfo(); role != Leader {
-				Debug(dWarn, "s%d not leader, return loop", rf.me)
 				return
 			}
 			args := argsMap[p]
-			successCh <- rf.appendEntries(p, args, true, "start")
+			successCh <- rf.appendEntries(p, args, true)
 		}(p)
 	}
 
@@ -113,7 +108,7 @@ func (rf *Raft) leaderCommitIndex() {
 	}
 }
 
-func (rf *Raft) appendEntries(pid int, args *AppendEntriesArgs, retry bool, heart string) bool {
+func (rf *Raft) appendEntries(pid int, args *AppendEntriesArgs, retry bool) bool {
 	for {
 		if r, _, _ := rf.getMetaInfo(); r != Leader {
 			return false
@@ -122,7 +117,7 @@ func (rf *Raft) appendEntries(pid int, args *AppendEntriesArgs, retry bool, hear
 		ok := rf.sendAppendEntries(pid, args, reply)
 
 		rf.mu.Lock()
-		Debug(dLeader, "%+v, s%d send append entries to s%d, rpc suc:%v, args log_len:%+v, leader_term:%+v, reply:%v", heart, rf.me, pid, ok, len(args.Entries), rf.currentTerm, reply)
+		Debug(dLeader, "s%d send append entries to s%d, rpc suc:%v, args log_len:%+v, leader_term:%+v, reply:%v", rf.me, pid, ok, len(args.Entries), rf.currentTerm, reply)
 		if rf.role != Leader {
 			rf.mu.Unlock()
 			return false
@@ -214,11 +209,7 @@ func (rf *Raft) handleLogEntriesUpdate(args *AppendEntriesArgs, reply *AppendEnt
 		if commitIndex != rf.commitIndex {
 			rf.applyCond.Broadcast()
 		}
-		var str = ""
-		for _, i := range rf.logEntries {
-			str += fmt.Sprintf("%v,", i.Command)
-		}
-		Debug(dCommit, "s%d follower commit index:%v, log entries:%+v, leader:%+v,leader_commit:%+v, leader_term:%+v", rf.me, rf.commitIndex, str, args.Leader, args.LeaderCommit, args.Term)
+		Debug(dCommit, "s%d follower commit index:%v, leader:%+v,leader_commit:%+v, leader_term:%+v", rf.me, rf.commitIndex, args.Leader, args.LeaderCommit, args.Term)
 	}
 	reply.Success = true
 }

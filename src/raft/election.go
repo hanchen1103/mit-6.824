@@ -107,7 +107,6 @@ func (rf *Raft) startElection() {
 				}
 			} else {
 				if reply.Term > rf.currentTerm {
-					Debug(dInfo, "s%d become follower because of s:%+v, rf.term:%v < reply.term:%v", rf.me, p, rf.currentTerm, reply.Term)
 					rf.currentTerm = reply.Term
 					rf.becomeFollower()
 					rf.votedFor = -1

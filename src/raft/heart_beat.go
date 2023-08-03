@@ -1,9 +1,5 @@
 package raft
 
-import (
-	"fmt"
-)
-
 func (rf *Raft) sendHeartBeats() {
 	rf.leaderCommitIndex()
 	rf.resetLeaderTicker()
@@ -22,7 +18,7 @@ func (rf *Raft) sendHeartBeats() {
 			case HeartBeatCheck:
 				rf.sendHeartBeatsMsg(p, args)
 			case LogEntriesUpdate:
-				rf.appendEntries(p, args, false, "heart")
+				rf.appendEntries(p, args, false)
 			}
 		}(p)
 	}
@@ -107,12 +103,6 @@ func (rf *Raft) handleHeartbeat(args *AppendEntriesArgs, reply *AppendEntriesRep
 			return
 		}
 		rf.commitIndex = min(args.LeaderCommit, logEntriesLen-1)
-		var str = ""
-		for _, i := range rf.logEntries {
-			str += fmt.Sprintf("%v,", i.Command)
-		}
-		Debug(dCommit, "heart beats s%d follower commit index:%v, log entries:%+v, leader:%+v,leader_commit:%+v, leader_term:%+v", rf.me, rf.commitIndex, str, args.Leader, args.LeaderCommit, args.Term)
-		//Debug(dCommit, "s%d follower commit index:%v, leader:%+v, leader_commit:%+v, leader_term:%+v", rf.me, rf.commitIndex, args.Leader, args.LeaderCommit, args.Term)
 		if commitIndex != rf.commitIndex {
 			rf.applyCond.Broadcast()
 		}

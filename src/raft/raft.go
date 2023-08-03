@@ -211,13 +211,6 @@ func (rf *Raft) leaderLoop() {
 			rf.resetLeaderTicker()
 		}
 	}
-	//ticker := time.NewTicker(SendHeartBeatsInterval)
-	//defer ticker.Stop()
-	//for range ticker.C {
-	//	if r, _, _ := rf.getMetaInfo(); r == Leader {
-	//		go rf.sendHeartBeats()
-	//	}
-	//}
 }
 
 func (rf *Raft) startElectionIfNotLeader() {
@@ -280,7 +273,7 @@ func Make(peers []*labrpc.ClientEnd, me int, persister *Persister, applyCh chan 
 	rf.applyCh = applyCh
 	rf.applyCond = sync.NewCond(&rf.mu)
 	rf.batchBuffer = 0
-	//eadlock.Opts.DeadlockTimeout = time.Second * 10
+	//deadlock.Opts.DeadlockTimeout = time.Second * 10
 
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
